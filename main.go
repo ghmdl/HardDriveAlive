@@ -41,7 +41,7 @@ func writeFile(outFile, txt string) error {
 
 	err := ioutil.WriteFile(outFile, []byte(txt), 0644)
 	if err != nil {
-		println("Error writing to file. Check your permissions. ", err)
+		fmt.Println("Error writing to file. Check your permissions. ", err)
 	}
 
 	return nil
