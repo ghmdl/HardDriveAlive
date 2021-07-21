@@ -14,26 +14,41 @@ import (
 	"time"
 )
 
-func main() {
+var InitWrite chan bool
 
+func main() {
+	InitWrite = make(chan bool)
+
+	var usrTimer uint32
 	fmt.Print("How frequently do we write to the file in seconds? (e.g. 10): ")
-	var usrTimer int
 	fmt.Scanln(&usrTimer)
 
-	initWrite := make(chan bool)
+	if usrTimer < 0 { //TODO: implement a better input checking
 
-	for {
-		go func() {
-			select {
-			case <-initWrite:
-				txtToWrite := "This file is being written by HardDriveAlive.\nLast write was on " + time.Now().Format(time.ANSIC)
-				writeFile("HardDriveAlive.txt", txtToWrite)
-				fmt.Println("Writing to file...", time.Now().Format(time.ANSIC))
-			}
-		}()
+		fmt.Println("Invalid input. Only a positive integer is allowed.")
+		fmt.Println("Exiting in 3 seconds...") //TODO: loop back program logic on error
+		time.Sleep(3 * time.Second)
 
-		initWrite <- true
-		time.Sleep(time.Duration(usrTimer) * time.Second)
+	} else if usrTimer > 1 {
+
+		for {
+			go func() {
+				select {
+				case <-InitWrite:
+					txtToWrite := "This file is being written by HardDriveAlive.\nLast write was on " + time.Now().Format(time.ANSIC)
+					writeFile("HardDriveAlive.txt", txtToWrite)
+					fmt.Println("Writing to file...", time.Now().Format(time.ANSIC))
+				}
+			}()
+
+			InitWrite <- true
+			time.Sleep(time.Duration(usrTimer) * time.Second)
+		}
+
+	} else {
+		fmt.Println("Invalid input. Only a positive integer is allowed.")
+		fmt.Println("Exiting in 3 seconds...") //TODO
+		time.Sleep(3 * time.Second)
 	}
 }
 
@@ -41,7 +56,8 @@ func writeFile(outFile, txt string) error {
 
 	err := ioutil.WriteFile(outFile, []byte(txt), 0644)
 	if err != nil {
-		fmt.Println("Error writing to file. Check your permissions. ", err)
+		fmt.Println("Error writing to file. Check your permissions in the current directory.\nError: ", err)
+		InitWrite <- false
 	}
 
 	return nil
